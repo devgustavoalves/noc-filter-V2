@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOC - Filtro de O.S por Região</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #111827;
+      --panel2: #151f32;
+      --line: #2d3b52;
+      --text: #f8fafc;
+      --muted: #a8b6ca;
+      --accent: #3168e5;
+      --green: #16a34a;
+      --red: #dc2626;
+      --yellow: #f59e0b;
+      --chip: #0f2440;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 24px 28px 20px;
+      background: #050918;
+      border-bottom: 1px solid var(--line);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      background: #ff5a1f;
+      border-radius: 50%;
+      box-shadow: 0 0 0 6px rgba(255, 90, 31, 0.12);
+      display: inline-block;
+    }
+    header p {
+      margin: 8px 0 0 28px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    main {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 22px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.15);
+    }
+    .card h2 { margin: 0 0 14px; font-size: 18px; }
+    label { display: block; color: #bfd0e8; font-size: 13px; margin-bottom: 7px; }
+    input[type="file"], select {
+      width: 100%;
+      background: #060b19;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 12px;
+      outline: none;
+    }
+    select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--accent);
+      transition: .15s;
+    }
+    .btn:hover { transform: translateY(-1px); opacity: .95; }
+    .btn.green { background: var(--green); }
+    .btn.red { background: var(--red); }
+    .btn.gray { background: #526174; }
+    .btn.yellow { background: var(--yellow); color: #111827; }
+    .btn.full { width: 100%; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+    .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 13px; }
+    .stat strong { display: block; font-size: 25px; margin-bottom: 6px; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .controls {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .os {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--green);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .os-main { font-size: 16px; font-weight: 850; line-height: 1.35; }
+    .meta { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip {
+      background: var(--chip);
+      border: 1px solid #24415f;
+      color: #c7dcff;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    textarea {
+      width: 100%;
+      height: 180px;
+      background: #050918;
+      color: white;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      resize: vertical;
+      line-height: 1.45;
+      margin-top: 8px;
+      outline: none;
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    .notice { padding: 12px; border-radius: 12px; margin-top: 12px; font-size: 13px; line-height: 1.35; }
+    .ok { background: #052e24; border: 1px solid #0f7b5d; color: #c9ffeb; }
+    .warn { background: #3a2a05; border: 1px solid #9f6b00; color: #ffe9b0; }
+    .empty {
+      padding: 34px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      background: #0f172a;
+    }
+    .summary {
+      margin-top: 14px;
+      max-height: 250px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0f172a;
+    }
+    .summary table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .summary th, .summary td { padding: 8px 9px; border-bottom: 1px solid #243247; text-align: left; }
+    .summary th { position: sticky; top: 0; background: #101a2d; }
+
+    .region-dropdown { position: relative; }
+    .region-trigger {
+      width: 100%;
+      min-height: 48px;
+      background: #060b19;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .region-trigger:hover { border-color: #4773c7; background: #081126; }
+    .region-trigger:after { content: "▾"; color: var(--muted); font-size: 14px; }
+    .region-trigger.open:after { content: "▴"; }
+    .region-trigger-content { display: grid; gap: 5px; min-width: 0; }
+    .region-trigger-title { font-size: 13px; color: var(--muted); }
+    .region-trigger-summary {
+      font-size: 14px;
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    .region-selected-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .region-selected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0b2a4d;
+      border: 1px solid #25517c;
+      color: #d9ebff;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      max-width: 100%;
+    }
+    .region-selected-chip.main { background: #11341f; border-color: #1d7a44; color: #d7ffe8; }
+    .region-menu {
+      display: none;
+      position: absolute;
+      z-index: 80;
+      top: calc(100% + 10px);
+      left: 0;
+      width: min(680px, calc(100vw - 48px));
+      background: #071024;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 28px 80px rgba(0,0,0,.52);
+      overflow: hidden;
+    }
+    .region-menu.open { display: block; }
+    .region-menu-head {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 12px;
+      background: linear-gradient(180deg, #0a1630, #071024);
+    }
+    .region-help { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .region-section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 13px;
+      margin-bottom: 7px;
+      color: #dbeafe;
+    }
+    .region-main-select, .region-search {
+      width: 100%;
+      background: #050918;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 11px;
+      outline: none;
+    }
+    .region-main-select:focus, .region-search:focus { border-color: var(--accent); }
+    .region-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .region-body { padding: 14px; display: grid; gap: 12px; }
+    .extras-toolbar { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+    .region-grid {
+      max-height: 300px;
+      overflow: auto;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding-right: 3px;
+    }
+    .region-option {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #0f172a;
+      border: 1px solid #243247;
+      border-radius: 12px;
+      padding: 10px;
+      min-height: 42px;
+      cursor: pointer;
+      user-select: none;
+      color: #e5eefc;
+      font-size: 13px;
+      transition: .12s;
+    }
+    .region-option:hover { border-color: #3c68a6; background: #101c31; }
+    .region-option input { width: 16px; height: 16px; accent-color: var(--green); }
+    .region-option.disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      background: #0a1020;
+    }
+    .region-count-badge {
+      color: #a8b6ca;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .region-footer {
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #091226;
+    }
+    .region-footer .muted { font-size: 12px; }
+    .audit-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 18px; }
+    #resultadoAuditoria { height: 240px; white-space: pre; font-family: Consolas, Monaco, monospace; font-size: 12px; }
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      .region-menu { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span class="dot"></span>NOC - Filtro de O.S por Região</h1>
+    <p>Usa a mesma lógica do script de contagem: lê o campo <b>Título</b>, detecta cidade e tipo pela ordem cadastrada e só lista as O.S contabilizadas.</p>
+  </header>
+
+  <main>
+    <aside class="card">
+      <h2>1. Importar relatório CSV</h2>
+      <label>Arquivo CSV do painel</label>
+      <input id="csvFile" type="file" accept=".csv,text/csv" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <button class="btn green" id="btnImportar">Importar CSV</button>
+        <button class="btn red" id="btnLimpar">Limpar</button>
+      </div>
+
+      <div class="grid2">
+        <div class="stat"><strong id="totalImportado">0</strong><span>Linhas no CSV</span></div>
+        <div class="stat"><strong id="totalContabilizado">0</strong><span>O.S contabilizadas</span></div>
+        <div class="stat"><strong id="totalFiltrado">0</strong><span>Filtro atual</span></div>
+        <div class="stat"><strong id="totalIgnorado">0</strong><span>Fora da regra</span></div>
+      </div>
+
+      <button class="btn gray full" id="btnCopiarLote">Copiar lista filtrada</button>
+
+      <div id="statusMsg" class="notice warn">Importe o CSV para começar.</div>
+
+      <div class="summary" id="resumoBox" style="display:none">
+        <table>
+          <thead><tr><th>Região</th><th>Total</th></tr></thead>
+          <tbody id="resumoTabela"></tbody>
+        </table>
+      </div>
+
+      
+    </aside>
+
+    <section class="card">
+      <h2>2. Resultado operacional</h2>
+      <div class="muted" style="margin-top:-8px;margin-bottom:14px">Saída: <b>Cliente / Tipo de conexão / Bairro do Cliente</b></div>
+
+      <div class="controls">
+        <div>
+          <label>Regiões</label>
+          
+          <div class="region-selected-chips" id="regionSelectedChips"></div>
+          <br>
+          <div class="region-dropdown" id="regionDropdown">
+            <button type="button" class="region-trigger" id="regionTrigger">
+              <span class="region-trigger-content">
+                <span class="region-trigger-title">Região principal + extras</span>
+                <span class="region-trigger-summary" id="regionSummary">JUAZEIRO SUPORTE</span>
+              </span>
+            </button>
+
+            
+
+            <div class="region-menu" id="regionMenu">
+              <div class="region-menu-head">
+                <div>
+                  <div class="region-section-title">👑 Região principal</div>
+                  <select id="regiaoPrincipalSelect" class="region-main-select"></select>
+                </div>
+                <div class="region-help">
+                  A principal é a rota base. As extras somam outras rotas no mesmo resultado, sem bagunçar a auditoria.
+                </div>
+              </div>
+
+              <div class="region-body">
+                <div>
+                  <div class="region-section-title">
+                    <span>➕ Regiões extras</span>
+                    <span class="region-count-badge" id="regionCountBadge">0 extras</span>
+                  </div>
+                  <div class="extras-toolbar">
+                    <input id="regionSearch" class="region-search" placeholder="Buscar região..." />
+                    <button type="button" class="btn gray" id="btnTodasExtras">Todas</button>
+                    <button type="button" class="btn gray" id="btnLimparExtras">Limpar</button>
+                  </div>
+                </div>
+
+                <div class="region-grid" id="regionExtrasGrid"></div>
+              </div>
+
+              <div class="region-footer">
+                <span class="muted" id="regionFooterText">1 região selecionada</span>
+                <div class="region-actions">
+                  <button type="button" class="btn gray" id="btnSomentePrincipal">Só principal</button>
+                  <button type="button" class="btn" id="btnFecharRegioes">Aplicar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>Tipo de demanda</label>
+          <select id="filtroTipo"></select>
+        </div>
+        <button class="btn" id="btnAtualizar">Atualizar</button>
+      </div>
+
+      <div id="lista" class="list">
+        <div class="empty">Importe o CSV do painel para começar.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const CIDADES_CONTAGEM = [
+      "JUAZEIRO", "JAGUARARI", "FLAMENGO", "SOBRADINHO", "PETROLINA",
+      "CARNAÍBA", "JUREMAL", "CURAÇÁ", "ITAMOTINGA", "NH3",
+      "MANDACARU", "JARDIM PRIMAVERA", "RODEADOURO", "SALITRE",
+      "CASA NOVA", "BEM BOM", "CAMPO FORMOSO", "LAGOA DO PORCO",
+      "UAUÁ", "MANIÇOBA", "PILAR", "POÇO DE FORA", "PINHÕES",
+      "LAJE DOS NEGROS", "SENTO SÉ"
+    ];
+
+    const TIPOS_CONTAGEM = [
+      "SEM CONEXÃO",
+      "MUDANÇA DE ENDEREÇO",
+      "ATIVAÇÃO",
+      "CONEXÃO LENTA",
+      "OSCILAÇÃO",
+      "SUBSTITUIÇÃO DE EQUIPAMENTO COMODATO"
+    ];
+
+    const REGIOES_FILTRO = [
+      "JUAZEIRO ATIVAÇÃO",
+      "JUAZEIRO SUPORTE",
+      "JUAZEIRO TOTAL",
+      ...CIDADES_CONTAGEM.filter(c => c !== "JUAZEIRO"),
+      "OUTROS"
+    ];
+
+    let demandas = [];
+    let ignoradas = [];
+    let regiaoPrincipal = "JUAZEIRO SUPORTE";
+    let regioesExtras = new Set();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      preencherSelect("filtroTipo", ["TODOS OS TIPOS", ...TIPOS_CONTAGEM]);
+      montarDropdownRegioes();
+      atualizarResumoRegioesSelecionadas();
+
+      document.getElementById("btnImportar").addEventListener("click", importarCSV);
+      document.getElementById("btnLimpar").addEventListener("click", limpar);
+      document.getElementById("btnAtualizar").addEventListener("click", renderizar);
+      document.getElementById("btnCopiarLote").addEventListener("click", copiarLote);
+      document.getElementById("filtroTipo").addEventListener("change", renderizar);
+      document.getElementById("btnAuditoria").addEventListener("click", compararComRelatorioAntigo);
+
+      document.getElementById("regionTrigger").addEventListener("click", toggleRegionMenu);
+      document.getElementById("btnFecharRegioes").addEventListener("click", fecharRegionMenu);
+      document.getElementById("btnTodasExtras").addEventListener("click", marcarTodasExtras);
+      document.getElementById("btnLimparExtras").addEventListener("click", limparExtras);
+      document.getElementById("btnSomentePrincipal").addEventListener("click", somentePrincipal);
+
+      document.addEventListener("click", (event) => {
+        const dropdown = document.getElementById("regionDropdown");
+        if (!dropdown.contains(event.target)) fecharRegionMenu();
+      });
+    });
+
+    function preencherSelect(id, opcoes) {
+      const select = document.getElementById(id);
+      select.innerHTML = "";
+      opcoes.forEach(op => {
+        const option = document.createElement("option");
+        option.value = op;
+        option.textContent = op;
+        select.appendChild(option);
+      });
+    }
+
+    function montarDropdownRegioes() {
+      const select = document.getElementById("regiaoPrincipalSelect");
+      const grid = document.getElementById("regionExtrasGrid");
+
+      select.innerHTML = "";
+      grid.innerHTML = "";
+
+      REGIOES_FILTRO.forEach(regiao => {
+        const option = document.createElement("option");
+        option.value = regiao;
+        option.textContent = regiao;
+        if (regiao === regiaoPrincipal) option.selected = true;
+        select.appendChild(option);
+
+        const label = document.createElement("label");
+        label.className = "region-option";
+        label.dataset.regiao = normalizarVisual(regiao);
+        label.innerHTML = `
+          <input type="checkbox" class="regiaoExtra" value="${escapeAttr(regiao)}">
+          <span>${escapeHTML(regiao)}</span>
+        `;
+        grid.appendChild(label);
+      });
+
+      select.addEventListener("change", () => {
+        regiaoPrincipal = select.value;
+        regioesExtras.delete(regiaoPrincipal);
+        sincronizarDropdownRegioes();
+        renderizar();
+      });
+
+      grid.querySelectorAll(".regiaoExtra").forEach(input => {
+        input.addEventListener("change", () => {
+          if (input.checked) regioesExtras.add(input.value);
+          else regioesExtras.delete(input.value);
+          regioesExtras.delete(regiaoPrincipal);
+          sincronizarDropdownRegioes();
+          renderizar();
+        });
+      });
+
+      document.getElementById("regionSearch").addEventListener("input", filtrarRegioesNoDropdown);
+      sincronizarDropdownRegioes();
+    }
+
+    function sincronizarDropdownRegioes() {
+      const select = document.getElementById("regiaoPrincipalSelect");
+      if (select) select.value = regiaoPrincipal;
+
+      document.querySelectorAll(".regiaoExtra").forEach(input => {
+        const isPrincipal = input.value === regiaoPrincipal;
+        input.checked = regioesExtras.has(input.value);
+        input.disabled = isPrincipal;
+        const option = input.closest(".region-option");
+        if (option) option.classList.toggle("disabled", isPrincipal);
+      });
+
+      atualizarResumoRegioesSelecionadas();
+      filtrarRegioesNoDropdown();
+    }
+
+    function regioesSelecionadas() {
+      return Array.from(new Set([regiaoPrincipal, ...Array.from(regioesExtras)]));
+    }
+
+    function atualizarResumoRegioesSelecionadas() {
+      const selecionadas = regioesSelecionadas();
+      const extras = selecionadas.filter(r => r !== regiaoPrincipal);
+
+      document.getElementById("regionSummary").textContent = extras.length
+        ? `${regiaoPrincipal} + ${extras.length} extra${extras.length > 1 ? "s" : ""}`
+        : regiaoPrincipal;
+
+      document.getElementById("regionCountBadge").textContent = `${extras.length} extra${extras.length !== 1 ? "s" : ""}`;
+      document.getElementById("regionFooterText").textContent = `${selecionadas.length} região${selecionadas.length !== 1 ? "ões" : ""} selecionada${selecionadas.length !== 1 ? "s" : ""}`;
+
+      const chips = document.getElementById("regionSelectedChips");
+      chips.innerHTML = "";
+
+      const chipPrincipal = document.createElement("span");
+      chipPrincipal.className = "region-selected-chip main";
+      chipPrincipal.textContent = `Principal: ${regiaoPrincipal}`;
+      chips.appendChild(chipPrincipal);
+
+      extras.slice(0, 5).forEach(extra => {
+        const chip = document.createElement("span");
+        chip.className = "region-selected-chip";
+        chip.textContent = extra;
+        chips.appendChild(chip);
+      });
+
+      if (extras.length > 5) {
+        const chip = document.createElement("span");
+        chip.className = "region-selected-chip";
+        chip.textContent = `+${extras.length - 5}`;
+        chips.appendChild(chip);
+      }
+    }
+
+    function toggleRegionMenu() {
+      document.getElementById("regionMenu").classList.toggle("open");
+      document.getElementById("regionTrigger").classList.toggle("open");
+      setTimeout(() => document.getElementById("regionSearch")?.focus(), 0);
+    }
+
+    function fecharRegionMenu() {
+      document.getElementById("regionMenu").classList.remove("open");
+      document.getElementById("regionTrigger").classList.remove("open");
+    }
+
+    function marcarTodasExtras() {
+      REGIOES_FILTRO.forEach(r => {
+        if (r !== regiaoPrincipal) regioesExtras.add(r);
+      });
+      sincronizarDropdownRegioes();
+      renderizar();
+    }
+
+    function limparExtras() {
+      regioesExtras.clear();
+      sincronizarDropdownRegioes();
+      renderizar();
+    }
+
+    function somentePrincipal() {
+      limparExtras();
+      fecharRegionMenu();
+    }
+
+    function filtrarRegioesNoDropdown() {
+      const termo = normalizarVisual(document.getElementById("regionSearch")?.value || "");
+      document.querySelectorAll(".region-option").forEach(option => {
+        const regiao = option.dataset.regiao || "";
+        option.style.display = !termo || regiao.includes(termo) ? "flex" : "none";
+      });
+    }
+
+    async function importarCSV() {
+      const file = document.getElementById("csvFile").files[0];
+      if (!file) {
+        alert("Selecione o CSV primeiro.");
+        return;
+      }
+
+      try {
+        const text = (await file.text()).replace(/^\uFEFF/, "");
+        const rows = parseCSV(text);
+
+        if (!rows.length) {
+          alert("CSV vazio ou inválido.");
+          return;
+        }
+
+        const processado = processarCSV(rows);
+        demandas = processado.validas;
+        ignoradas = processado.ignoradas;
+
+        atualizarStats(rows.length - 1);
+        popularResumo();
+        renderizar();
+
+        setStatus(`CSV importado. ${demandas.length} O.S contabilizadas pela mesma regra do relatório antigo.`, "ok");
+      } catch (e) {
+        console.error(e);
+        setStatus("Erro ao importar: " + e.message, "warn");
+      }
+    }
+
+    function processarCSV(rows) {
+      const headers = rows[0].map(normalizarCabecalho);
+      const idxTitulo = acharColuna(headers, ["TITULO"]);
+      const idxStatus = acharColuna(headers, ["STATUS"]);
+      const idxProtocolo = acharColuna(headers, ["PROTOCOLO"]);
+      const idxBairro = acharColuna(headers, ["BAIRRO DO CLIENTE", "BAIRRO"]);
+      const idxCidade = acharColuna(headers, ["CIDADE DO CLIENTE", "CIDADE"]);
+      const idxCatalogo = acharColuna(headers, ["CATALAGO DE SERVICOS", "CATALOGO DE SERVICOS"]);
+
+      if (idxTitulo === -1) throw new Error("Não encontrei a coluna Título no CSV.");
+
+      const validas = [];
+      const ignoradas = [];
+
+      rows.slice(1).forEach((row, index) => {
+        const titulo = get(row, idxTitulo);
+        const tituloNormalizado = normalizarTextoContagem(titulo);
+
+        const cidadeContagem = CIDADES_CONTAGEM.find(c => tituloNormalizado.includes(normalizarTextoContagem(c))) || "";
+        const tipoContagem = TIPOS_CONTAGEM.find(t => tituloNormalizado.includes(normalizarTextoContagem(t))) || "";
+
+        if (!cidadeContagem || !tipoContagem) {
+          ignoradas.push({
+            linha: index + 2,
+            titulo,
+            motivo: !cidadeContagem ? "Cidade não encontrada no título" : "Tipo não encontrado no título"
+          });
+          return;
+        }
+
+        const status = get(row, idxStatus);
+        const protocolo = get(row, idxProtocolo);
+        const bairro = get(row, idxBairro);
+        const cidadeCliente = get(row, idxCidade);
+        const catalogo = get(row, idxCatalogo);
+        const tipoOperacional = extrairTipoOperacional(titulo);
+        const cliente = extrairCliente(titulo, cidadeContagem);
+        const regiaoFiltro = calcularRegiaoFiltro(cidadeContagem, tipoContagem);
+
+        validas.push({
+          linha: index + 2,
+          titulo,
+          cidadeContagem,
+          tipoContagem,
+          regiaoFiltro,
+          tipoOperacional,
+          cliente,
+          bairro,
+          cidadeCliente,
+          catalogo,
+          status,
+          protocolo,
+          textoCopiar: `${cliente}\t${tipoOperacional}\t${bairro}`,
+          textoTela: `${cliente} / ${tipoOperacional} / ${bairro}`
+        });
+      });
+
+      return { validas, ignoradas };
+    }
+
+    function calcularRegiaoFiltro(cidadeContagem, tipoContagem) {
+      if (cidadeContagem !== "JUAZEIRO") return cidadeContagem;
+      if (tipoContagem === "ATIVAÇÃO" || tipoContagem === "MUDANÇA DE ENDEREÇO") return "JUAZEIRO ATIVAÇÃO";
+      return "JUAZEIRO SUPORTE";
+    }
+
+    function renderizar() {
+      const selecionadas = regioesSelecionadas();
+      const tipo = document.getElementById("filtroTipo").value;
+      const lista = document.getElementById("lista");
+
+      let filtradas = demandas.filter(d => {
+        const bateRegiao = selecionadas.some(regiao => {
+          return regiao === "JUAZEIRO TOTAL" ? d.cidadeContagem === "JUAZEIRO" : d.regiaoFiltro === regiao;
+        });
+        const bateTipo = tipo === "TODOS OS TIPOS" || d.tipoContagem === tipo;
+        return bateRegiao && bateTipo;
+      });
+
+      filtradas.sort((a,b) => normalizarVisual(a.bairro).localeCompare(normalizarVisual(b.bairro)) || normalizarVisual(a.cliente).localeCompare(normalizarVisual(b.cliente)));
+
+      document.getElementById("totalFiltrado").textContent = filtradas.length;
+      document.getElementById("saidaLote").value = filtradas.map(d => d.textoCopiar).join("\n");
+      lista.innerHTML = "";
+
+      if (!demandas.length) {
+        lista.innerHTML = `<div class="empty">Importe o CSV do painel para começar.</div>`;
+        return;
+      }
+
+      if (!filtradas.length) {
+        lista.innerHTML = `<div class="empty">Nenhuma O.S encontrada para esse filtro.</div>`;
+        return;
+      }
+
+      filtradas.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "os";
+
+        const info = document.createElement("div");
+        info.innerHTML = `
+          <div class="os-main">${escapeHTML(d.textoTela)}</div>
+          <div class="meta">
+            <span class="chip">Filtro: ${escapeHTML(d.regiaoFiltro)}</span>
+            <span class="chip">Contagem: ${escapeHTML(d.cidadeContagem)}</span>
+            <span class="chip">Tipo: ${escapeHTML(d.tipoContagem)}</span>
+            <span class="chip">Status: ${escapeHTML(d.status)}</span>
+            <span class="chip">Protocolo: ${escapeHTML(d.protocolo)}</span>
+          </div>
+        `;
+
+        const btn = document.createElement("button");
+        btn.className = "btn green";
+        btn.textContent = "COPIAR";
+        btn.addEventListener("click", () => copiarLinha(d.textoCopiar, btn));
+
+        div.appendChild(info);
+        div.appendChild(btn);
+        lista.appendChild(div);
+      });
+    }
+
+    function popularResumo() {
+      const box = document.getElementById("resumoBox");
+      const tbody = document.getElementById("resumoTabela");
+      const mapa = {};
+      CIDADES_CONTAGEM.forEach(c => mapa[c] = 0);
+      demandas.forEach(d => mapa[d.cidadeContagem] = (mapa[d.cidadeContagem] || 0) + 1);
+
+      tbody.innerHTML = "";
+      Object.keys(mapa).forEach(cidade => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${escapeHTML(cidade)}</td><td>${mapa[cidade]}</td>`;
+        tbody.appendChild(tr);
+      });
+      box.style.display = "block";
+    }
+
+    function compararComRelatorioAntigo() {
+      const texto = document.getElementById("relatorioAntigo").value;
+      const esperado = extrairContagemRelatorioAntigo(texto);
+      if (!Object.keys(esperado).length) {
+        document.getElementById("resultadoAuditoria").value = "Cole o relatório antigo antes de comparar.";
+        return;
+      }
+
+      const atual = {};
+      CIDADES_CONTAGEM.forEach(c => {
+        atual[c] = {};
+        TIPOS_CONTAGEM.forEach(t => atual[c][t] = 0);
+      });
+
+      demandas.forEach(d => {
+        if (!atual[d.cidadeContagem]) atual[d.cidadeContagem] = {};
+        atual[d.cidadeContagem][d.tipoContagem] = (atual[d.cidadeContagem][d.tipoContagem] || 0) + 1;
+      });
+
+      let saida = "COMPARAÇÃO RELATÓRIO ANTIGO x FILTRO\n\n";
+      let erros = 0;
+
+      Object.keys(esperado).forEach(regiao => {
+        saida += `📍 ${regiao}\n`;
+        Object.keys(esperado[regiao]).forEach(tipo => {
+          const e = esperado[regiao][tipo] || 0;
+          const a = atual[regiao]?.[tipo] || 0;
+          const diff = a - e;
+          if (diff !== 0) erros++;
+          saida += `${diff === 0 ? "✅" : "❌"} ${tipo}: esperado ${e} | filtro ${a} | diferença ${diff}\n`;
+        });
+        saida += "\n";
+      });
+
+      saida = `${erros === 0 ? "✅ Tudo batendo.\n\n" : `❌ ${erros} divergência(s) encontrada(s).\n\n`}` + saida;
+      document.getElementById("resultadoAuditoria").value = saida;
+    }
+
+    function extrairContagemRelatorioAntigo(texto) {
+      const linhas = String(texto || "").split(/\r?\n/);
+      const resultado = {};
+      let regiaoAtual = null;
+
+      linhas.forEach(linha => {
+        const regiaoMatch = linha.match(/📋\s*\*(.*?)\*/);
+        if (regiaoMatch) {
+          regiaoAtual = normalizarVisual(regiaoMatch[1]);
+          resultado[regiaoAtual] = {};
+          return;
+        }
+
+        const tipoMatch = linha.match(/🔹\s*(.*?):\s*(\d+)/);
+        if (tipoMatch && regiaoAtual) {
+          const tipo = normalizarVisual(tipoMatch[1]);
+          resultado[regiaoAtual][tipo] = Number(tipoMatch[2]);
+        }
+      });
+
+      return resultado;
+    }
+
+    function extrairTipoOperacional(titulo) {
+      const antesDaBarra = String(titulo || "").split("/")[0] || "";
+      return antesDaBarra
+        .replace(/Protocolo\s+\d+\s*-\s*/i, "")
+        .replace(/\((Suporte|Instalação|Instalacao)\)/gi, "")
+        .replace(/^Suporte\s*/i, "")
+        .trim() || "TIPO NÃO IDENTIFICADO";
+    }
+
+    function extrairCliente(titulo, cidadeContagem) {
+      const partes = String(titulo || "").split("/");
+      let cliente = partes.length > 1 ? partes.slice(1).join("/").trim() : "";
+
+      const reCidade = new RegExp("^\\s*" + escaparRegex(cidadeContagem) + "\\s*[-–—]?\\s*", "i");
+      cliente = cliente.replace(reCidade, "");
+
+      const clienteNorm = normalizarVisual(cliente);
+      const cidadeNorm = normalizarVisual(cidadeContagem);
+      if (clienteNorm.startsWith(cidadeNorm)) {
+        cliente = cliente.substring(cidadeContagem.length).replace(/^\s*[-–—]?\s*/, "");
+      }
+
+      return cliente.replace(/^[-–—\s]+/, "").trim() || "CLIENTE NÃO IDENTIFICADO";
+    }
+
+    function atualizarStats(totalCsv) {
+      document.getElementById("totalImportado").textContent = totalCsv;
+      document.getElementById("totalContabilizado").textContent = demandas.length;
+      document.getElementById("totalIgnorado").textContent = ignoradas.length;
+    }
+
+    function limpar() {
+      demandas = [];
+      ignoradas = [];
+      document.getElementById("csvFile").value = "";
+      document.getElementById("totalImportado").textContent = "0";
+      document.getElementById("totalContabilizado").textContent = "0";
+      document.getElementById("totalFiltrado").textContent = "0";
+      document.getElementById("totalIgnorado").textContent = "0";
+      document.getElementById("resumoBox").style.display = "none";
+      document.getElementById("lista").innerHTML = `<div class="empty">Importe o CSV do painel para começar.</div>`;
+      setStatus("Importe o CSV para começar.", "warn");
+    }
+
+    function copiarLinha(texto, btn) {
+      navigator.clipboard.writeText(texto).then(() => {
+        const antigo = btn.textContent;
+        btn.textContent = "COPIADO";
+        setTimeout(() => btn.textContent = antigo, 900);
+      });
+    }
+
+    function copiarLote() {
+      const texto = document.getElementById("saidaLote").value;
+      if (!texto) return;
+      navigator.clipboard.writeText(texto).then(() => setStatus("Lista filtrada copiada em colunas.", "ok"));
+    }
+
+    function setStatus(msg, tipo) {
+      const el = document.getElementById("statusMsg");
+      el.textContent = msg;
+      el.className = "notice " + tipo;
+    }
+
+    function parseCSV(text) {
+      const delimiter = detectarDelimitador(text);
+      const rows = [];
+      let row = [], value = "", insideQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i], next = text[i + 1];
+        if (char === '"' && insideQuotes && next === '"') { value += '"'; i++; }
+        else if (char === '"') insideQuotes = !insideQuotes;
+        else if (char === delimiter && !insideQuotes) { row.push(value.trim()); value = ""; }
+        else if ((char === "\n" || char === "\r") && !insideQuotes) {
+          if (value || row.length) { row.push(value.trim()); rows.push(row); row = []; value = ""; }
+          if (char === "\r" && next === "\n") i++;
+        } else value += char;
+      }
+      if (value || row.length) { row.push(value.trim()); rows.push(row); }
+      return rows.filter(r => r.some(c => String(c).trim() !== ""));
+    }
+
+    function detectarDelimitador(text) {
+      const primeira = text.split(/\r?\n/)[0] || "";
+      const cont = ch => (primeira.match(new RegExp("\\" + ch, "g")) || []).length;
+      const pontoVirgula = cont(";");
+      const virgula = cont(",");
+      const tab = (primeira.match(/\t/g) || []).length;
+      if (pontoVirgula >= virgula && pontoVirgula >= tab) return ";";
+      if (tab >= virgula && tab >= pontoVirgula) return "\t";
+      return ",";
+    }
+
+    function normalizarTextoContagem(texto) {
+      if (!texto) return "";
+      return String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+    }
+
+    function normalizarVisual(texto) {
+      return String(texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toUpperCase();
+    }
+
+    function normalizarCabecalho(texto) { return normalizarVisual(texto); }
+
+    function acharColuna(headersNormalizados, nomes) {
+      for (const nome of nomes) {
+        const idx = headersNormalizados.indexOf(normalizarCabecalho(nome));
+        if (idx !== -1) return idx;
+      }
+      return -1;
+    }
+
+    function get(row, idx) { return idx >= 0 ? String(row[idx] || "").trim() : ""; }
+    function escaparRegex(texto) { return String(texto || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    function escapeHTML(texto) {
+      return String(texto || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    function escapeAttr(texto) { return escapeHTML(texto); }
+  </script>
+</body>
+</html>
