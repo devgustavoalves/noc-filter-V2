@@ -515,7 +515,7 @@ function popularResumoVazio() {
 }
 
 function copiarLinha(texto, btn) {
-  navigator.clipboard.writeText(texto).then(() => {
+  navigator.clipboard.writeText(texto.toUpperCase()).then(() => {
     const antigo = btn.textContent;
     btn.textContent = "COPIADO";
     setTimeout(() => btn.textContent = antigo, 900);
