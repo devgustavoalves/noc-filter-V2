@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOC Rotas - Filtro Operacional</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark">NOC</div>
+      <div>
+        <h1>Filtro Operacional de O.S</h1>
+        <p>Importe o relatório, filtre rotas e copie cada demanda direto para a planilha.</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="btnTema" type="button">🌙 Escuro</button>
+      <button class="btn btn-danger" id="btnLimpar" type="button">Limpar</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="command-center">
+      <div class="upload-area">
+        <div class="field-title">Relatório CSV</div>
+        <label class="file-box" for="csvFile">
+          <input id="csvFile" type="file" accept=".csv,text/csv" />
+          <span class="file-icon">↥</span>
+          <span class="file-text">
+            <strong id="fileName">Escolher arquivo CSV</strong>
+            <small>Processado localmente no navegador</small>
+          </span>
+        </label>
+        <button class="btn btn-primary" id="btnImportar" type="button">Importar</button>
+      </div>
+
+      <div class="filters-area">
+        <div class="filter-field filter-routes">
+          <label>Rotas</label>
+          <div class="multi-dropdown" id="rotasDropdown">
+            <button type="button" class="multi-trigger" id="rotasTrigger">
+              <span>
+                <small>Selecionadas</small>
+                <strong id="rotasResumo">JUAZEIRO SUPORTE</strong>
+              </span>
+              <span class="chevron">▾</span>
+            </button>
+
+            <div class="multi-menu" id="rotasMenu">
+              <div class="multi-menu-header">
+                <strong>Selecionar rotas</strong>
+                <span>Marque quantas precisar</span>
+              </div>
+              <input id="buscaRota" class="multi-search" type="text" placeholder="Buscar rota..." />
+
+              <div class="multi-actions">
+                <button type="button" id="btnTodasRotas">Selecionar todas</button>
+                <button type="button" id="btnLimparRotas">Limpar</button>
+              </div>
+
+              <div class="multi-list" id="listaRotas"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-field">
+          <label for="filtroTipo">Tipo</label>
+          <select id="filtroTipo"></select>
+        </div>
+
+        <div class="filter-field search-field">
+          <label for="buscaLivre">Busca</label>
+          <input id="buscaLivre" type="text" placeholder="Cliente, bairro ou protocolo..." />
+        </div>
+
+        <button class="btn btn-secondary" id="btnCopiarLote" type="button">Copiar filtradas</button>
+      </div>
+
+      <div id="statusMsg" class="notice notice-warn">Importe o CSV para começar.</div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span>Linhas no CSV</span>
+        <strong id="totalImportado">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>O.S válidas</span>
+        <strong id="totalContabilizado">0</strong>
+      </article>
+      <article class="stat-card stat-primary">
+        <span>Filtro atual</span>
+        <strong id="totalFiltrado">0</strong>
+      </article>
+      <article class="stat-card stat-soft">
+        <span>Ignoradas</span>
+        <strong id="totalIgnorado">0</strong>
+      </article>
+    </section>
+
+    <section class="quick-summary">
+      <article class="mini-card">
+        <strong id="resumoTotal">0</strong>
+        <span>Total filtrado</span>
+      </article>
+      <article class="mini-card red">
+        <strong id="resumoSemConexao">0</strong>
+        <span>Sem conexão</span>
+      </article>
+      <article class="mini-card blue">
+        <strong id="resumoAtivacao">0</strong>
+        <span>Ativações</span>
+      </article>
+      <article class="mini-card purple">
+        <strong id="resumoMudancas">0</strong>
+        <span>Mudanças</span>
+      </article>
+      <article class="mini-card amber">
+        <strong id="resumoLentidao">0</strong>
+        <span>Oscilações/lentidão</span>
+      </article>
+    </section>
+
+    <section class="workspace">
+      <aside class="side-card">
+        <div class="card-title compact">
+          <div>
+            <span class="section-kicker">RESUMO</span>
+            <h2>Por região</h2>
+          </div>
+        </div>
+        <div class="summary-table-wrap">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Região</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="resumoTabela">
+              <tr><td colspan="2">Importe o CSV.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="lote-details">
+          <summary>Ver saída em lote</summary>
+          <textarea id="saidaLote" readonly placeholder="As O.S filtradas aparecem aqui em formato de colunas..."></textarea>
+        </details>
+      </aside>
+
+      <section class="result-card">
+        <div class="card-title result-title">
+          <div>
+            <span class="section-kicker">SAÍDA OPERACIONAL</span>
+            <h2>O.S encontradas</h2>
+          </div>
+          <span class="hint">Copia como: Cliente → Tipo → Bairro</span>
+        </div>
+
+        <div id="lista" class="os-list">
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <strong>Nenhum CSV importado ainda.</strong>
+            <span>Importe o relatório para visualizar as demandas.</span>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
